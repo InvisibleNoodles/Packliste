@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧳 Dynamische Packliste</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    h2 {
+      color: #3498db;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+      margin-top: 30px;
+    }
+    h3 {
+      color: #2980b9;
+      margin-top: 20px;
+    }
+    .input-group {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .input-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    .input-group input[type="number"],
+    .input-group input[type="text"],
+    .input-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-top: 10px;
+    }
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      font-weight: normal;
+      cursor: pointer;
+    }
+    .checkbox-group input[type="checkbox"] {
+      margin-right: 8px;
+    }
+    #packliste {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .category {
+      margin-bottom: 25px;
+    }
+    .item {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    .item:last-child {
+      border-bottom: none;
+    }
+    .item input[type="checkbox"] {
+      margin-right: 12px;
+    }
+    .item span {
+      flex: 1;
+    }
+    .item .quantity {
+      color: #7f8c8d;
+      font-size: 0.9em;
+      margin-left: 10px;
+    }
+    .checked {
+      opacity: 0.6;
+    }
+    .checked span {
+      text-decoration: line-through;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      .checkbox-group {
+        flex-direction: column;
+        gap: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>🧳 Dynamische Packliste</h1>
+
+  <!-- Eingabefelder -->
+  <div class="input-group">
+    <h2>⚙️ Reiseeinstellungen</h2>
+
+    <label for="dauer">Reisedauer (Tage):</label>
+    <input type="number" id="dauer" min="1" value="7">
+
+    <label for="tempMin">Temperatur (Min °C):</label>
+    <input type="number" id="tempMin" value="15">
+
+    <label for="tempMax">Temperatur (Max °C):</label>
+    <input type="number" id="tempMax" value="25">
+
+    <label>Aktivitäten:</label>
+    <div class="checkbox-group">
+      <label><input type="checkbox" id="wandern" checked> Wandern</label>
+      <label><input type="checkbox" id="strand" checked> Strand</label>
+      <label><input type="checkbox" id="business"> Business</label>
+      <label><input type="checkbox" id="radfahren"> Radfahren</label>
+      <label><input type="checkbox" id="skifahren"> Skifahren</label>
+    </div>
+
+    <label for="waesche">Wäsche waschen?</label>
+    <select id="waesche">
+      <option value="ja">Ja</option>
+      <option value="nein">Nein</option>
+    </select>
+
+    <label for="gepaecklimit">Gepäcklimit (kg, optional):</label>
+    <input type="number" id="gepaecklimit" min="0" step="0.1" placeholder="z. B. 20">
+
+    <button id="exportBtn">📄 Packliste exportieren</button>
+  </div>
+
+  <!-- Packliste -->
+  <div id="packliste">
+    <h2>📋 Deine Packliste</h2>
+    <p>Passe die Einstellungen an, um deine Packliste zu generieren.</p>
+  </div>
+
+  <script>
+    // Datenbank mit allen Items und ihren Bedingungen
+    const items = [
+      // Kleidung
+      { category: "Kleidung", name: "T-Shirts", condition: (d, tMin, tMax, akt) => true, quantity: (d, waesche) => waesche === "ja" ? Math.ceil(d / 2) + 1 : d + 1 },
+     { category: "Kleidung", name: "Langarm-Shirts", condition: (d, tMin, tMax, akt) => tMax <= 20, quantity: (d, waesche) => waesche === "ja" ? Math.ceil(d / 3) + 1 : d },
+      { category: "Kleidung", name: "Regenjacke", condition: (d, tMin, tMax, akt) => tMin <= 15 || akt.wandern || akt.radfahren, quantity: () => 1 },
+      { category: "Kleidung", name: "Badekleidung", condition: (d, tMin, tMax, akt) => akt.strand || tMax >= 25, quantity: () => 2 },
+      { category: "Kleidung", name: "Badehandtuch", condition: (d, tMin, tMax, akt) => akt.strand || akt.skifahren, quantity: () => 1 },
+      { category: "Kleidung", name: "Socken (dünn)", condition: (d, tMin, tMax, akt) => tMax >= 20 || akt.strand, quantity: (d, waesche) => waesche === "ja" ? Math.ceil(d / 2) + 1 : d + 1 },
+      { category: "Kleidung", name: "Socken (warm)", condition: (d, tMin, tMax, akt) => tMax <= 15 || akt.wandern || akt.skifahren, quantity: (d, waesche) => waesche === "ja" ? Math.ceil(d / 2) + 1 : d + 1 },
+      { category: "Kleidung", name: "Wandersocken", condition: (d, tMin, tMax, akt) => tMin <= 15 || akt.wandern, quantity: (d, waesche) => waesche === "ja" ? Math.ceil(d / 2) + 1 : d + 1 },
+      { category: "Kleidung", name: "Unterwäsche", condition: () => true, quantity: (d, waesche) => waesche === "ja" ? Math.ceil(d / 3) + 2 : d + 2 },
+      { category: "Kleidung", name: "Hose (leicht)", condition: (d, tMin, tMax, akt) => tMax >= 20 || akt.strand, quantity: (d) => Math.ceil(d / 2) },
+      { category: "Kleidung", name: "Hose (warm)", condition: (d, tMin, tMax, akt) => tMin <= 18 || akt.wandern, quantity: (d) => Math.ceil(d / 3) + 1 },
+      { category: "Kleidung", name: "Pullover", condition: (d, tMin, tMax) => tMin <= 18, quantity: (d) => Math.ceil(d / 2) },
+      { category: "Kleidung", name: "Fleecejacke", condition: (d, tMin, tMax, akt) => tMin <= 10 || akt.wandern || akt.skifahren, quantity: () => 1 },
+      { category: "Kleidung", name: "Mütze", condition: (d, tMin, tMax, akt) => tMin <= 10 || akt.skifahren, quantity: () => 1 },
+      { category: "Kleidung", name: "Handschuhe", condition: (d, tMin, tMax, akt) => tMin <= 10 || akt.skifahren, quantity: () => 1 },
+      { category: "Kleidung", name: "Schal", condition: (d, tMin, tMax) => tMin <= 10, quantity: () => 1 },
+      { category: "Kleidung", name: "Sonnenhut/Kappe", condition: (d, tMin, tMax, akt) => akt.strand || tMax >= 25, quantity: () => 1 },
+      { category: "Kleidung", name: "Schlafkleidung", condition: () => true, quantity: (d) => Math.ceil(d / 3) + 1 },
+      { category: "Kleidung", name: "Bequeme Schuhe", condition: () => true, quantity: () => 1 },
+      { category: "Kleidung", name: "Wanderschuhe", condition: (d, tMin, tMax, akt) => akt.wandern, quantity: () => 1 },
+      { category: "Kleidung", name: "Sandalen", condition: (d, tMin, tMax, akt) => akt.strand || tMax >= 25, quantity: () => 1 },
+      { category: "Kleidung", name: "Skischuhe", condition: (d, tMin, tMax, akt) => akt.skifahren, quantity: () => 1 },
+
+      // Hygiene
+      { category: "Hygiene", name: "Zahnbürste", condition: () => true, quantity: () => 1 },
+      { category: "Hygiene", name: "Zahnpasta", condition: () => true, quantity: () => 1 },
+      { category: "Hygiene", name: "Shampoo", condition: (d) => d >= 3, quantity: () => 1 },
+      { category: "Hygiene", name: "Duschgel", condition: (d) => d >= 3, quantity: () => 1 },
+      { category: "Hygiene", name: "Deo", condition: () => true, quantity: () => 1 },
+      { category: "Hygiene", name: "Rasierer", condition: (d) => d >= 3, quantity: () => 1 },
+      { category: "Hygiene", name: "Sonnencreme", condition: (d, tMin, tMax, akt) => akt.strand || tMax >= 20, quantity: () => 1 },
+      { category: "Hygiene", name: "After-Sun-Lotion", condition: (d, tMin, tMax, akt) => akt.strand || tMax >= 25, quantity: () => 1 },
+      { category: "Hygiene", name: "Handtuch", condition: () => true, quantity: () => 1 },
+      { category: "Hygiene", name: "Feuchttücher", condition: (d) => d >= 1, quantity: (d) => Math.ceil(d / 2) },
+      { category: "Hygiene", name: "Haarbürste/Kamm", condition: () => true, quantity: () => 1 },
+      { category: "Hygiene", name: "Nagelschere", condition: (d) => d >= 5, quantity: () => 1 },
+      { category: "Hygiene", name: "Ohrstöpsel", condition: (d) => d >= 1, quantity: () => 1 },
+      { category: "Hygiene", name: "Tampons/Binden", condition: (d, tMin, tMax, akt) => true, quantity: (d) => Math.ceil(d / 1) + 2 },
+
+      // Elektronik
+      { category: "Elektronik", name: "Handy", condition: () => true, quantity: () => 1 },
+      { category: "Elektronik", name: "Handy-Ladekabel", condition: () => true, quantity: () => 1 },
+      { category: "Elektronik", name: "Powerbank", condition: (d) => d >= 2, quantity: () => 1 },
+      { category: "Elektronik", name: "Adapter (Reise)", condition: (d, tMin, tMax, akt) => d >= 1, quantity: () => 1 },
+      { category: "Elektronik", name: "Kopfhörer", condition: () => true, quantity: () => 1 },
+      { category: "Elektronik", name: "Kamera", condition: (d, tMin, tMax, akt) => akt.wandern || akt.strand, quantity: () => 1 },
+      { category: "Elektronik", name: "E-Reader/Tablet", condition: (d) => d >= 3, quantity: () => 1 },
+      { category: "Elektronik", name: "Laptop", condition: (d, tMin, tMax, akt) => akt.business, quantity: () => 1 },
+      { category: "Elektronik", name: "Taschenlampe", condition: (d, tMin, tMax, akt) => akt.wandern, quantity: () => 1 },
+
+      // Dokumente
+      { category: "Dokumente", name: "Reisepass", condition: () => true, quantity: () => 1 },
+      { category: "Dokumente", name: "Personalausweis", condition: () => true, quantity: () => 1 },
+      { category: "Dokumente", name: "Führerschein", condition: (d, tMin, tMax, akt) => akt.radfahren, quantity: () => 1 },
+      { category: "Dokumente", name: "Kreditkarte", condition: () => true, quantity: () => 1 },
+      { category: "Dokumente", name: "EC-Karte", condition: () => true, quantity: () => 1 },
+      { category: "Dokumente", name: "Reiseversicherung", condition: (d) => d >= 3, quantity: () => 1 },
+      { category: "Dokumente", name: "Impfpass", condition: (d, tMin, tMax, akt) => d >= 7, quantity: () => 1 },
+      { category: "Dokumente", name: "Flugtickets", condition: (d) => d >= 1, quantity: () => 1 },
+      { category: "Dokumente", name: "Hotelbuchung", condition: (d) => d >= 1, quantity: () => 1 },
+
+      // Sonstiges
+      { category: "Sonstiges", name: "Wasserdichte Hülle", condition: (d, tMin, tMax, akt) => akt.strand || akt.wandern, quantity: () => 1 },
+      { category: "Sonstiges", name: "Rucksack (Tages)", condition: (d, tMin, tMax, akt) => akt.wandern || akt.radfahren, quantity: () => 1 },
+      { category: "Sonstiges", name: "Trinkflasche", condition: (d, tMin, tMax, akt) => akt.wandern || akt.radfahren, quantity: () => 1 },
+      { category: "Sonstiges", name: "Snacks", condition: (d) => d >= 1, quantity: (d) => Math.ceil(d / 2) },
+      { category: "Sonstiges", name: "Wasserflasche", condition: () => true, quantity: () => 1 },
+      { category: "Sonstiges", name: "Reiseführer", condition: (d) => d >= 3, quantity: () => 1 },
+      { category: "Sonstiges", name: "Schlüsselbund", condition: () => true, quantity: () => 1 },
+      { category: "Sonstiges", name: "Brille (Sonnenbrille)", condition: (d, tMin, tMax, akt) => akt.strand || tMax >= 20, quantity: () => 1 },
+      { category: "Sonstiges", name: "Brille", condition: () => true, quantity: () => 1 },
+      { category: "Sonstiges", name: "Schirm", condition: (d, tMin, tMax) => tMin <= 15 || tMax >= 25, quantity: () => 1 },
+      { category: "Sonstiges", name: "Thyroxin", condition: () => true, quantity: () => 1 },
+      { category: "Sonstiges", name: "Pflaster/Verbandszeug", condition: (d) => d >= 1, quantity: () => 1 },
+    ];
+
+    // Gewichtsdatenbank (in kg)
+    const weights = {
+      "T-Shirts": 0.2,
+      "Langarm-Shirts": 0.25,
+      "Regenjacke": 0.5,
+      "Badekleidung": 0.1,
+      "Badehandtuch": 0.8,
+      "Socken (dünn)": 0.05,
+      "Socken (warm)": 0.08,
+      "Wandersocken": 0.08,
+      "Unterwäsche": 0.05,
+      "Hose (leicht)": 0.4,
+      "Hose (warm)": 0.5,
+      "Pullover": 0.4,
+      "Fleecejacke": 0.6,
+      "Mütze": 0.1,
+      "Handschuhe": 0.1,
+      "Schal": 0.15,
+      "Sonnenhut/Kappe": 0.1,
+      "Schlafkleidung": 0.3,
+      "Bequeme Schuhe": 0.8,
+      "Wanderschuhe": 1.2,
+      "Sandalen": 0.5,
+      "Skischuhe": 2.0,
+      "Zahnbürste": 0.02,
+      "Zahnpasta": 0.1,
+      "Shampoo": 0.3,
+      "Duschgel": 0.3,
+      "Deo": 0.1,
+      "Rasierer": 0.1,
+      "Sonnencreme": 0.2,
+      "After-Sun-Lotion": 0.25,
+      "Handtuch": 0.5,
+      "Feuchttücher": 0.05,
+      "Haarbürste/Kamm": 0.05,
+      "Nagelschere": 0.02,
+      "Ohrstöpsel": 0.01,
+      "Tampons/Binden": 0.05,
+      "Handy": 0.2,
+      "Handy-Ladekabel": 0.05,
+      "Powerbank": 0.3,
+      "Adapter (Reise)": 0.1,
+      "Kopfhörer": 0.1,
+      "Kamera": 0.5,
+      "E-Reader/Tablet": 0.4,
+      "Laptop": 1.5,
+      "Taschenlampe": 0.2,
+      "Reisepass": 0.05,
+      "Personalausweis": 0.05,
+      "Führerschein": 0.02,
+      "Kreditkarte": 0.01,
+      "EC-Karte": 0.01,
+      "Reiseversicherung": 0.02,
+      "Impfpass": 0.02,
+      "Flugtickets": 0.05,
+      "Hotelbuchung": 0.05,
+      "Wasserdichte Hülle": 0.05,
+      "Rucksack (Tages)": 0.5,
+      "Trinkflasche": 0.3,
+      "Snacks": 0.1,
+      "Wasserflasche": 0.5,
+      "Reiseführer": 0.3,
+      "Schlüsselbund": 0.05,
+      "Brille (Sonnenbrille)": 0.05,
+      "Brille": 0.05,
+      "Schirm": 0.3,
+      "Thyroxin": 0.1,
+      "Pflaster/Verbandszeug": 0.05,
+    };
+
+    // Funktion zum Aktualisieren der Packliste
+    function updatePackliste() {
+      const dauer = parseInt(document.getElementById("dauer").value) || 1;
+      const tempMin = parseInt(document.getElementById("tempMin").value) || 0;
+      const tempMax = parseInt(document.getElementById("tempMax").value) || 30;
+      const wandern = document.getElementById("wandern").checked;
+      const strand = document.getElementById("strand").checked;
+      const business = document.getElementById("business").checked;
+      const radfahren = document.getElementById("radfahren").checked;
+      const skifahren = document.getElementById("skifahren").checked;
+      const waesche = document.getElementById("waesche").value;
+      const gepaecklimit = parseFloat(document.getElementById("gepaecklimit").value) || Infinity;
+
+      const akt = { wandern, strand, business, radfahren, skifahren };
+      const packlisteDiv = document.getElementById("packliste");
+
+      // Filtere Items basierend auf Bedingungen
+      const filteredItems = items.filter(item =>
+        item.condition(dauer, tempMin, tempMax, akt)
+      );
+
+      // Gruppen nach Kategorien
+      const kategorien = {};
+      filteredItems.forEach(item => {
+        const menge = typeof item.quantity === "function" ?
+          item.quantity(dauer, waesche, akt) : item.quantity;
+        if (!kategorien[item.category]) {
+          kategorien[item.category] = [];
+        }
+        kategorien[item.category].push({
+          name: item.name,
+          menge: menge,
+          gewicht: weights[item.name] || 0
+        });
+      });
+
+      // Berechne Gesamtgewicht
+      let gesamtgewicht = 0;
+      filteredItems.forEach(item => {
+        const menge = typeof item.quantity === "function" ?
+          item.quantity(dauer, waesche, akt) : item.quantity;
+        gesamtgewicht += menge * (weights[item.name] || 0);
+      });
+
+      // Anzeigen
+      packlisteDiv.innerHTML = `
+        <h2>📋 Deine Packliste für ${dauer} Tage (${tempMin}°C – ${tempMax}°C)</h2>
+        ${gepaecklimit < Infinity ? `<p style="color: ${gesamtgewicht > gepaecklimit ? 'red' : '#27ae60'}; font-weight: bold;">
+          Gesamtgewicht: ${gesamtgewicht.toFixed(2)} kg / Limit: ${gepaecklimit} kg
+        </p>` : `<p><strong>Gesamtgewicht:</strong> ${gesamtgewicht.toFixed(2)} kg</p>`}
+      `;
+
+      // Kategorien anzeigen
+      for (const [kategorie, itemsInKategorie] of Object.entries(kategorien)) {
+        const kategorieDiv = document.createElement("div");
+        kategorieDiv.className = "category";
+        kategorieDiv.innerHTML = `<h3>${kategorie}</h3>`;
+        packlisteDiv.appendChild(kategorieDiv);
+
+        itemsInKategorie.forEach(item => {
+          const itemDiv = document.createElement("div");
+          itemDiv.className = "item";
+          itemDiv.innerHTML = `
+            <input type="checkbox" class="checkbox">
+            <span>${item.menge}x ${item.name}</span>
+            <span class="quantity">(${item.menge * item.gewicht} kg)</span>
+          `;
+          kategorieDiv.appendChild(itemDiv);
+        });
+      }
+
+      // Checkboxen für "Eingepackt?" hinzufügen
+      document.querySelectorAll('.checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          this.parentElement.classList.toggle('checked', this.checked);
+        });
+      });
+    }
+
+    // Export-Funktion (als Text)
+    function exportPackliste() {
+      const packlisteDiv = document.getElementById("packliste");
+      const text = packlisteDiv.innerText.replace(/📋|🧳|⚙️|📄/g, '');
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Packliste_${document.getElementById("dauer").value}Tage.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Event-Listener für Änderungen
+    document.getElementById("dauer").addEventListener("input", updatePackliste);
+    document.getElementById("tempMin").addEventListener("input", updatePackliste);
+    document.getElementById("tempMax").addEventListener("input", updatePackliste);
+    document.getElementById("wandern").addEventListener("change", updatePackliste);
+    document.getElementById("strand").addEventListener("change", updatePackliste);
+    document.getElementById("business").addEventListener("change", updatePackliste);
+    document.getElementById("radfahren").addEventListener("change", updatePackliste);
+    document.getElementById("skifahren").addEventListener("change", updatePackliste);
+    document.getElementById("waesche").addEventListener("change", updatePackliste);
+    document.getElementById("gepaecklimit").addEventListener("input", updatePackliste);
+    document.getElementById("exportBtn").addEventListener("click", exportPackliste);
+
+    // Initial aufrufen
+    updatePackliste();
+  </script>
+</body>
+</html>
