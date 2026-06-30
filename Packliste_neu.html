@@ -151,7 +151,7 @@
     <div class="checkbox-group">
       <label><input type="checkbox" id="wandern"> Wandern</label>
       <label><input type="checkbox" id="strand"> Strand</label>
-      <label><input type="checkbox" id="business"> Business</label>
+      <label><input type="checkbox" id="festlich"> festlich</label>
       <label><input type="checkbox" id="radfahren"> Radfahren</label>
       <label><input type="checkbox" id="schnee"> Schnee</label>
     </div>
@@ -189,7 +189,7 @@
       { category: "Kleidung", name: "Socken (warm)", condition: (d, tMin, tMax, akt) => tMax <= 15 || (tMax > 15 && tMax < 20), quantity: (d, waesche, akt, tMax) => { const gesamt = waesche === "ja" ? Math.ceil(d / 2) + 2 : d; if (tMax <= 15) return gesamt; if (tMax >= 20) return 0; return Math.floor(gesamt / 2); } },
       { category: "Kleidung", name: "Unterwäsche", condition: () => true, quantity: (d, waesche) => waesche === "ja" ? Math.ceil(d / 3) + 2 : d + 1 },
       { category: "Kleidung", name: "Leggings", condition: (d, tMin, tMax, akt) => tMax >= 20 || akt.wandern, quantity: (d) => Math.ceil(d / 6) },
-      { category: "Kleidung", name: "Chub Rubs", condition: (d, tMin, tMax, akt) => tMax >= 20 || akt.strand || akt.business, quantity: (d) => Math.ceil(d / 6) },
+      { category: "Kleidung", name: "Chub Rubs", condition: (d, tMin, tMax, akt) => tMax >= 20 || akt.strand || akt.festlich, quantity: (d) => Math.ceil(d / 6) },
       { category: "Kleidung", name: "Sporthose", condition: (d, tMin, tMax, akt) => tMax >= 20 || akt.wandern || akt.radfahren || akt.strand, quantity: () => 1 },
       { category: "Kleidung", name: "Jeans", condition: (d, tMin, tMax, akt) => tMax <= 18, quantity: (d) => Math.ceil(d / 7) },
       { category: "Kleidung", name: "Pullover", condition: (d, tMin, tMax, akt) => tMax <= 18, quantity: (d) => Math.ceil(d / 4) },
@@ -230,7 +230,7 @@
       { category: "Elektronik", name: "Kopfhörer", condition: () => true, quantity: () => 1 },
       { category: "Elektronik", name: "Kamera", condition: (d, tMin, tMax, akt) => akt.wandern || akt.strand, quantity: () => 1 },
       { category: "Elektronik", name: "E-Reader/Tablet", condition: (d) => d >= 3, quantity: () => 1 },
-      { category: "Elektronik", name: "Laptop", condition: (d, tMin, tMax, akt) => akt.business, quantity: () => 1 },
+      { category: "Elektronik", name: "Laptop", condition: (d, tMin, tMax, akt) => akt.festlich, quantity: () => 1 },
       { category: "Elektronik", name: "Taschenlampe", condition: (d, tMin, tMax, akt) => akt.wandern, quantity: () => 1 },
 
       // Dokumente
@@ -340,13 +340,13 @@
       const tempMax = parseInt(document.getElementById("tempMax").value) || 30;
       const wandern = document.getElementById("wandern").checked;
       const strand = document.getElementById("strand").checked;
-      const business = document.getElementById("business").checked;
+      const festlich = document.getElementById("festlich").checked;
       const radfahren = document.getElementById("radfahren").checked;
       const schnee = document.getElementById("schnee").checked;
       const waesche = document.getElementById("waesche").value;
       const gepaecklimit = parseFloat(document.getElementById("gepaecklimit").value) || Infinity;
 
-      const akt = { wandern, strand, business, radfahren, schnee };
+      const akt = { wandern, strand, festlich, radfahren, schnee };
       const packlisteDiv = document.getElementById("packliste");
 
       // Filtere Items basierend auf Bedingungen
@@ -436,7 +436,7 @@
     document.getElementById("tempMax").addEventListener("input", updatePackliste);
     document.getElementById("wandern").addEventListener("change", updatePackliste);
     document.getElementById("strand").addEventListener("change", updatePackliste);
-    document.getElementById("business").addEventListener("change", updatePackliste);
+    document.getElementById("festlich").addEventListener("change", updatePackliste);
     document.getElementById("radfahren").addEventListener("change", updatePackliste);
     document.getElementById("schnee").addEventListener("change", updatePackliste);
     document.getElementById("waesche").addEventListener("change", updatePackliste);
