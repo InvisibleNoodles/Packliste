@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧳 Dynamische Packliste</title>
+  <style>
+    /* ... dein CSS bleibt gleich ... */
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; color: #333; }
+    h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
+    .input-group { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; }
+    .item { display: flex; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
+    .checked { opacity: 0.6; text-decoration: line-through; }
+    button { background-color: #3498db; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>🧳 Dynamische Packliste</h1>
+
+  <div class="input-group">
+    <h2>⚙️ Reiseeinstellungen</h2>
+    <label>Reisedauer (Tage):</label>
+    <input type="number" id="dauer" value="7">
+    <label>Temperatur (°C):</label>
+    <input type="number" id="tempMin" value="15"> bis <input type="number" id="tempMax" value="25">
+    
+    <label>Aktivitäten:</label>
+    <div class="checkbox-group">
+      <label><input type="checkbox" id="wandern"> Wandern</label>
+      <label><input type="checkbox" id="strand"> Strand</label>
+      <label><input type="checkbox" id="business"> Business</label>
+      <label><input type="checkbox" id="radfahren"> Radfahren</label>
+      <label><input type="checkbox" id="schnee"> Schnee</label>
+      <label><input type="checkbox" id="familie"> Besuch bei Familie</label>
+    </div>
+
+    <label>Wäsche waschen?</label>
+    <select id="waesche"><option value="ja">Ja</option><option value="nein">Nein</option></select>
+    <label>Gepäcklimit (kg):</label>
+    <input type="number" id="gepaecklimit" placeholder="z. B. 20">
+    <br><br>
+    <button id="exportBtn">📄 Packliste exportieren</button>
+  </div>
+
+  <div id="packliste"></div>
+
+  <script>
+    const items = [
+      { category: "Kleidung", name: "T-Shirts", condition: () => true, quantity: (d, w) => w === "ja" ? Math.ceil(d / 3) + 1 : d + 1 },
+      { category: "Sonstiges", name: "Geschenk für Familie", condition: (d, tMin, tMax, akt) => akt.familie, quantity: () => 1 },
+      { category: "Elektronik", name: "Laptop", condition: (d, tMin, tMax, akt) => akt.business && !akt.familie, quantity: () => 1 },
+      // ... (restliche items wie gehabt, hier gekürzt zur Übersicht)
+      { category: "Kleidung", name: "Pullover", condition: (d, tMin, tMax, akt) => tMax <= 18, quantity: (d) => Math.ceil(d / 4) }
+    ];
+
+    function updatePackliste() {
+      const akt = { 
+        wandern: document.getElementById("wandern").checked,
+        strand: document.getElementById("strand").checked,
+        business: document.getElementById("business").checked,
+        radfahren: document.getElementById("radfahren").checked,
+        schnee: document.getElementById("schnee").checked,
+        familie: document.getElementById("familie").checked 
+      };
+      
+      const dauer = parseInt(document.getElementById("dauer").value);
+      const tMin = parseInt(document.getElementById("tempMin").value);
+      const tMax = parseInt(document.getElementById("tempMax").value);
+      const waesche = document.getElementById("waesche").value;
+      
+      const liste = document.getElementById("packliste");
+      liste.innerHTML = "<h2>📋 Deine Packliste</h2>";
+
+      items.filter(i => i.condition(dauer, tMin, tMax, akt)).forEach(item => {
+        const menge = item.quantity(dauer, waesche, akt, tMax);
+        liste.innerHTML += `<div class="item"><input type="checkbox"> <span>${menge}x ${item.name}</span></div>`;
+      });
+    }
+
+    document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', updatePackliste));
+    document.getElementById("exportBtn").addEventListener("click", () => {
+        const text = document.getElementById("packliste").innerText;
+        const a = document.createElement('a');
+        a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(text);
+        a.download = 'packliste.txt';
+        a.click();
+    });
+    updatePackliste();
+  </script>
+</body>
+</html>
