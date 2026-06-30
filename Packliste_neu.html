@@ -198,7 +198,7 @@
       { category: "Kleidung", name: "Mütze", condition: (d, tMin, tMax, akt) => tMax <= 10 || akt.schnee, quantity: () => 1 },
       { category: "Kleidung", name: "Handschuhe", condition: (d, tMin, tMax, akt) => tMax <= 10 || akt.schnee, quantity: () => 1 },
       { category: "Kleidung", name: "Schal", condition: (d, tMin, tMax, akt) => tMax <= 10, quantity: () => 1 },
-      { category: "Kleidung", name: "Sonnenhut/Kappe", condition: (d, tMin, tMax, akt) => akt.strand || tMax >= 25, quantity: () => 1 },
+      { category: "Kleidung", name: "Sonnenhut/Kappe", condition: (d, tMin, tMax, akt) => akt.wandern || akt.strand || tMax >= 25, quantity: () => 1 },
       { category: "Kleidung", name: "Schlafkleidung", condition: () => true, quantity: () => 1 },
       { category: "Kleidung", name: "Bequeme Schuhe", condition: () => true, quantity: () => 1 },
       { category: "Kleidung", name: "Wanderschuhe", condition: (d, tMin, tMax, akt) => akt.wandern, quantity: () => 1 },
