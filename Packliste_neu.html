@@ -178,7 +178,22 @@
     // Datenbank mit allen Items und ihren Bedingungen
     const items = [
       // Kleidung
-      { category: "Kleidung", name: "T-Shirts", condition: () => true, quantity: (d, waesche) => waesche === "ja" ? Math.ceil(d / 3) + 1 : d + 1 },
+      { category: "Kleidung", name: "T-Shirts", condition: () => true, quantity: (d, waesche, akt, tMax) => { 
+    const gesamt = waesche === "ja" ? Math.ceil(d / 2) + 2 : d; 
+    let anzahl = 0;
+    if (tMax >= 20) anzahl = gesamt;
+    else if (tMax <= 15) anzahl = 0;
+    else anzahl = Math.ceil(gesamt / 2);
+    
+    return Math.min(10, anzahl); // <--- Hier ist das Limit von 10
+  } 
+},
+{ 
+
+
+
+
+      
       { category: "Kleidung", name: "Langarm-Shirts", condition: (d, tMin, tMax, akt) => tMax <= 20, quantity: (d, waesche) => waesche === "ja" ? Math.ceil(d / 4) + 1 : d },
       { category: "Kleidung", name: "Regenjacke", condition: (d, tMin, tMax, akt) => tMax <= 15 || akt.wandern || akt.radfahren, quantity: () => 1 },
       { category: "Kleidung", name: "Badekleidung", condition: (d, tMin, tMax, akt) => akt.strand || akt.wandern, quantity: () => 1 },
