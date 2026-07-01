@@ -243,6 +243,7 @@
       { category: "Hygiene", name: "Deo", condition: () => true, quantity: () => 1 },
       { category: "Hygiene", name: "Rasierer", condition: (d) => d >= 3, quantity: () => 1 },
       { category: "Hygiene", name: "Sonnencreme", condition: (d, tMin, tMax, akt) => akt.strand || tMax >= 20, quantity: () => 1 },
+      { category: "Hygiene", name: "Sonnencreme Gesicht", condition: (d, tMin, tMax, akt) => akt.strand || tMax >= 20, quantity: () => 1 },
       { category: "Hygiene", name: "After-Sun-Lotion", condition: (d, tMin, tMax, akt) => akt.strand || tMax >= 25, quantity: () => 1 },
       { category: "Hygiene", name: "Handtuch", condition: () => true, quantity: () => 1 },
       { category: "Hygiene", name: "Feuchttücher", condition: (d) => d >= 1, quantity: (d) => Math.ceil(d / 2) },
@@ -285,7 +286,10 @@
       { category: "Sonstiges", name: "Sonnenbrille ohne Sehstärke", condition: () => true, quantity: () => 1 },
       { category: "Sonstiges", name: "Brille", condition: () => true, quantity: () => 1 },
       { category: "Sonstiges", name: "Schirm", condition: (d, tMin, tMax, akt) => tMax <= 15 || tMax >= 25, quantity: () => 1 },
-      { category: "Sonstiges", name: "Medikamente", condition: () => true, quantity: () => 1 },
+      { category: "Sonstiges", name: "Allergietabletten", condition: () => true, quantity: () => 1 },
+      { category: "Sonstiges", name: "Thyroxin", condition: () => true, quantity: () => 1 },
+      { category: "Sonstiges", name: "Pille", condition: () => true, quantity: () => 1 },
+      { category: "Sonstiges", name: "Insektenstichheiler", condition: () => true, quantity: () => 1 },
       { category: "Sonstiges", name: "Pflaster/Verbandszeug", condition: (d) => d >= 1, quantity: () => 1 },
     ];
 
